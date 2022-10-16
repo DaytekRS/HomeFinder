@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Home Finder</string>
+    <string name="settings">Настройки</string>
+    <string name="add">Добавить</string>
+</resources>
