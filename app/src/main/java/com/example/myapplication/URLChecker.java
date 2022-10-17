@@ -1,80 +1,49 @@
 package com.example.myapplication;
 
 import android.app.AlarmManager;
-import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 import android.os.IBinder;
-import android.util.Log;
 import androidx.annotation.Nullable;
-import androidx.core.app.NotificationCompat;
 
-import com.example.myapplication.sql.SqlHelper;
+import com.example.myapplication.notification.NotificationManager;
 
-
-
-public class URLChecker  extends Service {
-    private AlarmManager am;
+public class URLChecker extends Service
+{
+    private AlarmManager alarmManager;
     private PendingIntent pendingIntent;
-    public static SqlHelper sql;
-    public static long count;
-    private static String CHANNEL_ID = "Cat channel";
 
     @Override
-    public void onCreate() {
-        super.onCreate();
-        count=0;
-    }
+    public int onStartCommand(Intent intent_, int flags, int startId)
+    {
+        String title = "Я слежу за куфаром. Никто не пройдет мимо";
+        String text = "Хозяин я ищу для тебя квартиру XD";
+        NotificationManager.sendForegroundNotification(this, title, text);
 
-    @Override
-    public int onStartCommand(Intent intent_, int flags, int startId) {
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Я слежу за куфаром. Никто не пройдет мимо")
-                .setContentText("Хозяин я ищу для тебя квартиру XD")
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setContentIntent(pendingIntent)
-                .build();
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(notificationIntent);
-        }
-        startForeground(1, notification);
-
-        if (sql == null) {
-            try {
-                sql = new SqlHelper(getBaseContext());
-            } catch (Exception e) {
-                throw new RuntimeException(e.getMessage());
-            }
-        }
-        Log.d("hmm","Start");
-        am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 
         Intent intent = new Intent(this, URLReceiver.class);
         pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT );
-        am.cancel(pendingIntent);
-        am.setRepeating(AlarmManager.RTC_WAKEUP,System.currentTimeMillis(),10000 , pendingIntent);
+        alarmManager.cancel(pendingIntent);
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 60000, pendingIntent);
 
-        Log.d("hmm","Start2");
         return Service.START_STICKY;
     }
 
     @Override
-    public void onDestroy() {
-        Log.d("hmm","onDestroy");
-        am.cancel(pendingIntent);
+    public void onDestroy()
+    {
+        alarmManager.cancel(pendingIntent);
         stopSelf();
         super.onDestroy();
     }
 
     @Nullable
     @Override
-    public IBinder onBind(Intent intent) {
+    public IBinder onBind(Intent intent)
+    {
         return null;
     }
 }
