@@ -1,24 +1,27 @@
 package com.example.myapplication;
 
 import android.app.ActivityManager;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 
 import com.example.myapplication.sql.LinksSQL;
 import com.example.myapplication.sql.SqlHelper;
-
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 
 public class URLReceiver extends BroadcastReceiver {
     private static String CHANNEL_ID = "Cat channel";
@@ -55,36 +58,31 @@ public class URLReceiver extends BroadcastReceiver {
                     throw new RuntimeException(e.getMessage());
                 }
             }
-            String newFlat = "false";
+            Boolean newFlat = false;
             for (LinksSQL.Link link : sql.getLinksSQL().selectLinks()) {
                 try {
-                    Document doc = Jsoup.connect(link.getName()).get();
+                    //https://cre-api-v2.kufar.by/items-search/v1/engine/v1/search/map?cat=1010&gtsy=country-belarus~province-vitebskaja_oblast~locality-novopolock&rnt=1&size=5000&typ=let
+                    //https://cre-api-v2.kufar.by/items-search/v1/engine/v1/search/map?cat=1010&gtsy=country-belarus~province-vitebskaja_oblast~area-polockij_rajon~locality-polock&rnt=1&size=5000&typ=let
+                    Document pod = Jsoup.connect("http://cre-api-v2.kufar.by/items-search/v1/engine/v1/search/rendered-paginated?cat=1010&cur=USD&gtsy=&lang=ru&rnt=1&size=30&typ=let").ignoreContentType(true).get();
+                    Gson gson = new Gson();
+                    JsonObject object = gson.fromJson(pod.text(), JsonObject.class);
+                    int total = Integer.parseInt(object.get("total").toString());
 
-                    Elements buttons = doc.getElementsByTag("button");
-                    Element button = null;
-                    for (Element el : buttons){
-                        if (el.text().contains("Показать")) button = el;
-                    }
-                    if (button != null) {
-                        String answer = button.text();
-                        String dec = (answer.split(" "))[1];
-                        dec = dec.substring(1, dec.length() - 1);
-                        Log.d("count = ", link.getCount().toString());
-                        Log.d("parse count = ", dec);
-                        if (link.getCount().compareTo(Long.parseLong(dec)) < 0) {
-                            newFlat = "true";
+                    newFlat = link.getCount() < total;
+                    if (link.getCount() > total || newFlat) {
+                        sql.getLinksSQL().updateCount(link.getId(), total);
+
+                        if (newFlat) {
+                            break;
                         }
-                        if (!link.getCount().equals(Long.parseLong(dec))) {
-                            sql.getLinksSQL().updateCount(link.getId(), Long.parseLong(dec));
-                        }
-                    }else {
-                        Log.d("hmmm","Don't found button");
                     }
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
                 } catch (IOException e) {
-
+                    e.printStackTrace();
                 }
             }
-            return newFlat;
+            return newFlat.toString();
         }
 
         private boolean isMyServiceRunning(Class<?> serviceClass) {
@@ -101,7 +99,7 @@ public class URLReceiver extends BroadcastReceiver {
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
-            Log.d("hmm", result);
+            Log.d("New house find:", result);
             if (Boolean.parseBoolean(result)) {
                 NotificationCompat.Builder builder =
                         new NotificationCompat.Builder(context, CHANNEL_ID)
@@ -111,8 +109,14 @@ public class URLReceiver extends BroadcastReceiver {
                                 .setVibrate(new long[]{300, 300, 300, 300, 300})
                                 .setLights(0xFFFF0000, 300, 100)
                                 .setPriority(NotificationCompat.PRIORITY_MAX);
-                NotificationManagerCompat notificationManager =
-                        NotificationManagerCompat.from(context);
+
+                NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Channel", NotificationManager.IMPORTANCE_HIGH);
+                    channel.setDescription("Home Finder");
+                    notificationManager.createNotificationChannel(channel);
+                }
+
                 notificationManager.notify(NOTIFY_ID, builder.build());
             }
         }

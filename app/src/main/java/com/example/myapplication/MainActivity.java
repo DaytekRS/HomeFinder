@@ -10,7 +10,6 @@ import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -39,14 +38,11 @@ public class MainActivity extends AppCompatActivity {
 
         NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel1 = new
-                    NotificationChannel(CHANNEL_ID, "Channel(1)", NotificationManager.IMPORTANCE_HIGH);
-            channel1.setDescription("Channel 1 Dec..");
-            notificationManager.createNotificationChannel(channel1);
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Channel", NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("Home Finder");
+            notificationManager.createNotificationChannel(channel);
         }
-        //NotificationManagerCompat.from(this);
         notificationManager.notify(NOTIFY_ID, builder.build());
-
     }
 
 }
