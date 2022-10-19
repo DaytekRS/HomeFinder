@@ -58,7 +58,7 @@ public class URLReceiver extends BroadcastReceiver
             {
                 try
                 {
-                    Document pod = Jsoup.connect(link.getName()).ignoreContentType(true).get();
+                    Document pod = Jsoup.connect(link.getLink()).ignoreContentType(true).get();
                     Gson gson = new Gson();
                     JsonObject object = gson.fromJson(pod.text(), JsonObject.class);
                     int total = Integer.parseInt(object.get("total").toString());

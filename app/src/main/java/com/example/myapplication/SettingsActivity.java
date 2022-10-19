@@ -19,6 +19,7 @@ public class SettingsActivity extends AppCompatActivity
 {
     private ArrayList<LinksSQL.Link> links;
     private TextInputEditText linkView;
+    private TextInputEditText nameView;
     private ArrayAdapter<LinksSQL.Link> adapter;
 
     @Override
@@ -27,7 +28,8 @@ public class SettingsActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_settings);
-        linkView  = findViewById(R.id.linkView);
+        nameView = findViewById(R.id.nameView);
+        linkView = findViewById(R.id.linkView);
         ListView lvMain = findViewById(R.id.lvSettings);
 
         final LinksSQL linksSQL = SqlHelper.getInstance().getLinksSQL();
@@ -46,7 +48,7 @@ public class SettingsActivity extends AppCompatActivity
                 LinksSQL.Link link = (LinksSQL.Link) parent.getItemAtPosition(position);
                 linksSQL.deleteLink(link.getId());
 
-                Toast.makeText(parent.getContext(), link.getName(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(parent.getContext(), link.getLink(), Toast.LENGTH_SHORT).show();
                 adapter.remove(link);
                 adapter.notifyDataSetChanged();
             }
@@ -58,7 +60,7 @@ public class SettingsActivity extends AppCompatActivity
         Toast.makeText(this, linkView.getText(), Toast.LENGTH_SHORT).show();
 
         LinksSQL linksSQL = SqlHelper.getInstance().getLinksSQL();
-        linksSQL.insertLink(linkView.getText().toString());
+        linksSQL.insertLink(nameView.getText().toString(), linkView.getText().toString());
         links = linksSQL.selectLinks();
 
         adapter.clear();
