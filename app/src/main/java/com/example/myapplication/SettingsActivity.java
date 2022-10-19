@@ -68,5 +68,6 @@ public class SettingsActivity extends AppCompatActivity
         adapter.notifyDataSetChanged();
 
         linkView.setText("");
+        nameView.setText("");
     }
 }
