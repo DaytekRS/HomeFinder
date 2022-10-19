@@ -16,9 +16,13 @@ import com.example.myapplication.R;
 public class NotificationManager {
     public static final String CHANNEL_ID = "Home Finder";
 
-    private static final int NOTIFY_ID = 101;
+    public static final String FOREGROUND_CHANNEL_ID = "Foreground Home Finder";
 
-    private static NotificationChannel CHANNEL;
+    private static int NOTIFY_ID = 101;
+
+    private static NotificationChannel NOTIFICATION_CHANNEL;
+
+    private static NotificationChannel FOREGROUND_NOTIFICATION_CHANNEL;
 
     public static NotificationCompat.Builder createNotification(Context context, String title, String text)
     {
@@ -27,7 +31,8 @@ public class NotificationManager {
 
     public static NotificationCompat.Builder createNotification(Context context, String title, String text, PendingIntent intent)
     {
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, CHANNEL_ID)
+        String channelId = intent != null ? FOREGROUND_CHANNEL_ID : CHANNEL_ID;
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, channelId)
                 .setContentTitle(title)
                 .setContentText(text)
                 .setSmallIcon(R.drawable.ic_launcher_foreground);
@@ -50,6 +55,14 @@ public class NotificationManager {
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
         {
+            if (FOREGROUND_NOTIFICATION_CHANNEL == null)
+            {
+                android.app.NotificationManager notificationManager = (android.app.NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+                FOREGROUND_NOTIFICATION_CHANNEL = new NotificationChannel(FOREGROUND_CHANNEL_ID, "Foreground channel", android.app.NotificationManager.IMPORTANCE_DEFAULT);
+                FOREGROUND_NOTIFICATION_CHANNEL.setDescription("Home Finder");
+                notificationManager.createNotificationChannel(FOREGROUND_NOTIFICATION_CHANNEL);
+            }
+
             context.startForegroundService(notificationIntent);
         }
         context.startForeground(1, createNotification(context, title, text, pendingIntent).build());
@@ -65,13 +78,13 @@ public class NotificationManager {
         android.app.NotificationManager notificationManager = (android.app.NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
         {
-            if (CHANNEL == null)
+            if (NOTIFICATION_CHANNEL == null)
             {
-                CHANNEL = new NotificationChannel(CHANNEL_ID, "Channel", android.app.NotificationManager.IMPORTANCE_HIGH);
-                CHANNEL.setDescription("Home Finder");
+                NOTIFICATION_CHANNEL = new NotificationChannel(CHANNEL_ID, "Channel", android.app.NotificationManager.IMPORTANCE_HIGH);
+                NOTIFICATION_CHANNEL.setDescription("Home Finder");
+                notificationManager.createNotificationChannel(NOTIFICATION_CHANNEL);
             }
-            notificationManager.createNotificationChannel(CHANNEL);
         }
-        notificationManager.notify(NOTIFY_ID, notification);
+        notificationManager.notify(NOTIFY_ID++, notification);
     }
 }
