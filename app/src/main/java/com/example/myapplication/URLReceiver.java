@@ -54,6 +54,8 @@ public class URLReceiver extends BroadcastReceiver
                 context.startService(new Intent(context, URLChecker.class));
             }
 
+            StringBuilder idNewOfferInLinks = new StringBuilder();
+
             for (LinksSQL.Link link : sql.getLinksSQL().selectLinks())
             {
                 try
@@ -70,7 +72,11 @@ public class URLReceiver extends BroadcastReceiver
                     }
 
                     sql.getLinksSQL().updateCount(link.getId(), total);
-                    return String.valueOf(oldCount < total);
+
+                    if (oldCount < total)
+                    {
+                        idNewOfferInLinks.append(link.getId()).append(" ");
+                    }
                 }
                 catch (MalformedURLException e)
                 {
@@ -81,7 +87,7 @@ public class URLReceiver extends BroadcastReceiver
                     e.printStackTrace();
                 }
             }
-            return "false";
+            return idNewOfferInLinks.toString();
         }
 
         private boolean isMyServiceRunning(Class<?> serviceClass)
@@ -102,10 +108,24 @@ public class URLReceiver extends BroadcastReceiver
         protected void onPostExecute(String result)
         {
             super.onPostExecute(result);
-            if (Boolean.parseBoolean(result))
+            if (result.equals(""))
             {
+                return;
+            }
+
+            String[] arrayId = result.split("\\s");
+            LinksSQL linksSQL = SqlHelper.getInstance().getLinksSQL();
+
+            for (String id : arrayId)
+            {
+                LinksSQL.Link link = linksSQL.selectLinksById(id);
+                if (link == null)
+                {
+                    continue;
+                }
+
                 String title = "Напоминание";
-                String description = "Появилось новое предложение";
+                String description = "Новое предложение в " + link.getName();
 
                 NotificationCompat.Builder builder = NotificationManager.createNotification(context, title, description);
                 builder.setVibrate(new long[]{300, 300, 300, 300, 300})

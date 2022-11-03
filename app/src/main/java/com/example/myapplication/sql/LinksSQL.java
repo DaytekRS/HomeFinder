@@ -54,6 +54,28 @@ public class LinksSQL
         return allLinks;
     }
 
+    public Link selectLinksById(String idSearch)
+    {
+        String columns = COLUMN_ID + "," + COLUMN_NAME + "," + COLUMN_COUNT + "," + COLUMN_LINK;
+
+        Cursor cursor = db.rawQuery("SELECT " + columns + " FROM LINKS WHERE " + COLUMN_ID + " = " + idSearch, null);
+        if(cursor.moveToFirst())
+        {
+            do
+            {
+                int id = Integer.parseInt(cursor.getString(0));
+                String name = cursor.getString(1);
+                Long count = cursor.getLong(2);
+                String link = cursor.getString(3);
+                return new Link(id, name, link, count);
+            }
+            while (cursor.moveToNext());
+        }
+        cursor.close();
+
+        return null;
+    }
+
     public void deleteLink(int id)
     {
         db.execSQL("DELETE FROM " + TABLE_NAME + " WHERE _id = " + id);
@@ -101,6 +123,10 @@ public class LinksSQL
         public String getLink()
         {
             return link;
+        }
+
+        public String getName() {
+            return name;
         }
 
         @Override
